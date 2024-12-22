@@ -7,7 +7,7 @@ const Todo = require('../models/Todo');
 // GET all todos
 router.get('/', async (req, res) => {
     try {
-        const todos = await Todo.find().sort('position').exec();
+        const todos = await Todo.find().sort('position').populate('tags').exec();
         res.json(todos);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -44,9 +44,13 @@ router.patch('/:id', getTodo, async (req, res) => {
     if (req.body.completed != null) {
         res.todo.completed = req.body.completed;
     }
+    if (req.body.tags != null) {
+        res.todo.tags = req.body.tags;
+    }
     try {
         const updatedTodo = await res.todo.save();
-        res.json(updatedTodo);
+        const populatedTodo = await Todo.findById(updatedTodo._id).populate('tags');
+        res.json(populatedTodo);
     } catch (err) {
         res.status(400).json({ message: err.message });
     }

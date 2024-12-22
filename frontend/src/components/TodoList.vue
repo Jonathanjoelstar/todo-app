@@ -22,7 +22,7 @@
           :key="todo._id"
           class="flex items-center justify-between p-2 bg-gray-50 rounded-md shadow-sm"
         >
-          <div class="flex items-center">
+          <div class="flex items-center flex-grow">
             <span class="handle cursor-move mr-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
                 viewBox="0 0 24 24" stroke="currentColor">
@@ -36,28 +36,56 @@
               @change="updateTodo(todo)"
               class="form-checkbox h-5 w-5 text-blue-600"
             />
-            <span
-              :class="{
-                'line-through text-gray-500': todo.completed,
-                'text-gray-900': !todo.completed
-              }"
-              class="ml-2"
-            >
-              {{ todo.title }}
-            </span>
+            <div class="ml-2 flex flex-col">
+              <span
+                :class="{
+                  'line-through text-gray-500': todo.completed,
+                  'text-gray-900': !todo.completed
+                }"
+              >
+                {{ todo.title }}
+              </span>
+              <div class="flex flex-wrap gap-1 mt-1">
+                <span
+                  v-for="tag in todo.tags"
+                  :key="tag._id"
+                  class="px-2 py-0.5 text-xs rounded-full"
+                  :style="{ backgroundColor: tag.color + '20', color: tag.color }"
+                >
+                  {{ tag.name }}
+                </span>
+              </div>
+            </div>
           </div>
-          <button
-            @click="deleteTodo(todo._id)"
-            class="text-red-500 hover:text-red-700 focus:outline-none"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-              viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          
+          <div class="flex items-center ml-2">
+            <TagSelector
+              :model-value="todo.tags || []"
+              @update:modelValue="(newTags) => updateTodoTags(todo, newTags)"
+              class="mr-2"
+            />
+            <button
+              @click="deleteTodo(todo._id)"
+              class="text-red-500 hover:text-red-700 focus:outline-none"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </li>
       </transition-group>
+    </div>
+
+    <!-- Notification -->
+    <div
+      v-if="notification"
+      class="fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg"
+      :class="notificationClass"
+    >
+      {{ notification }}
     </div>
   </div>
 </template>
@@ -65,9 +93,13 @@
 <script>
 import axios from 'axios';
 import Sortable from 'sortablejs';
+import TagSelector from './TagSelector.vue';
 
 export default {
   name: 'TodoList',
+  components: {
+    TagSelector
+  },
   data() {
     return {
       todos: [],
@@ -100,21 +132,32 @@ export default {
     },
     async updateTodo(todo) {
       try {
-        await axios.patch(`/api/todos/${todo._id}`, { completed: todo.completed });
+        const response = await axios.patch(`/api/todos/${todo._id}`, { completed: todo.completed });
+        Object.assign(todo, response.data);
         this.showNotification('Tâche mise à jour.', 'bg-green-100 text-green-700');
       } catch (error) {
         console.error(error);
         this.showNotification('Erreur lors de la mise à jour de la tâche.', 'bg-red-100 text-red-700');
       }
     },
-    async deleteTodo(id) {
+    async updateTodoTags(todo, newTags) {
       try {
-        await axios.delete(`/api/todos/${id}`);
-        this.todos = this.todos.filter(todo => todo._id !== id);
-        this.showNotification('Tâche supprimée.', 'bg-green-100 text-green-700');
+        const response = await axios.patch(`/api/todos/${todo._id}`, {
+          tags: newTags.map(tag => tag._id)
+        });
+        
+        // S'assurer que todo.tags est initialisé
+        if (!todo.tags) {
+          todo.tags = [];
+        }
+        
+        // Mettre à jour les tags avec la réponse du serveur
+        Object.assign(todo, response.data);
+        
+        this.showNotification('Tags mis à jour.', 'bg-green-100 text-green-700');
       } catch (error) {
-        console.error(error);
-        this.showNotification('Erreur lors de la suppression de la tâche.', 'bg-red-100 text-red-700');
+        console.error('Error updating tags:', error);
+        this.showNotification('Erreur lors de la mise à jour des tags.', 'bg-red-100 text-red-700');
       }
     },
     async onDragEnd() {
@@ -151,5 +194,21 @@ export default {
 .handle {
   display: flex;
   align-items: center;
+}
+
+/* Animation pour les transitions */
+.v-enter-active,
+.v-leave-active {
+  transition: all 0.3s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.v-move {
+  transition: transform 0.3s ease;
 }
 </style>
