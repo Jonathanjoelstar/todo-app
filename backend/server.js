@@ -6,7 +6,7 @@ const todoRoutes = require('./routes/todos');
 const net = require('net');
 
 const app = express();
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://mongo:27017/todos';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/todos';
 
 // Fonction pour tester si un port est disponible
 const isPortAvailable = (port) => {
