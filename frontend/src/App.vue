@@ -18,6 +18,7 @@ export default {
 };
 </script>
 
+
 <style>
 /* Vous pouvez ajouter des styles supplémentaires ici si nécessaire */
 </style>
