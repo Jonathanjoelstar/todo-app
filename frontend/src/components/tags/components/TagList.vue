@@ -1,5 +1,5 @@
 <template>
-	<div class="w-1/8 flex space-x-3 relative">
+	<div class="w-1/8 flex relative">
 
 		<Popover class="relative">
 			<PopoverButton data-popover-target="popover-bottom-start" class="outline-none">
@@ -12,13 +12,13 @@
 			</PopoverButton>
 			<PopoverPanel data-popover="popover-bottom-start" data-popover-placement="bottom-start" as="Listbox">
 				<Listbox
-					class="block absolute -right-0 top-10 z-10 p-4 font-sans text-sm font-normal break-words whitespace-normal bg-white rounded-lg shadow-lg w-max border-blue-gray-50 text-blue-gray-500 shadow-blue-gray-500/10 h-60 w-72"
+					class="block absolute -right-0 top-10 z-10 p-4 font-sans text-sm font-normal break-words whitespace-normal bg-white rounded-lg shadow-lg w-max border-blue-gray-50 text-blue-gray-500 shadow-blue-gray-500/10 h-60 w-64"
 					as="div" v-model="selectedTags" multiple>
 
 					<!--Dans un premier fixe, Dev les différentes catégories-->
 					<div class="flex justify-between mb-4">
 						<ListboxLabel class="rounded border border-slate-200 py-1 px-2 text-left basis-9/12">
-							{{ selectedTags[0] ? selectedTags[0].category : 'Sélectionnez des options' }}
+							{{ selectedTags[0] ? selectedTags[0].category : 'Catégories' }}
 						</ListboxLabel>
 						<button class="border bg-gray-100 rounded border-blue-gray-500 basis-1/12">
 							<!-- Contenu du bouton -->
@@ -56,7 +56,5 @@
 	</div>
 
 </template>
-
-<style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
 
 <script scoped lang="js" src="../services/TagList.js" />

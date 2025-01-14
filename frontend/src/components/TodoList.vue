@@ -12,37 +12,44 @@
 		<div ref="sortableList">
 			<transition-group>
 				<li v-for="todo in todos" :key="todo._id"
-					class="flex items-center justify-between p-2 bg-gray-50 rounded-md shadow-sm grid grid-rows-3 grid-cols-4 gap-2 ">
-					<div class="row-span-2 row-start-1 row-end-4 col-end-6 col-span-3 flex items-center">
+					class="flex items-center p-2 bg-gray-50 rounded-md shadow-sm grid grid-rows-3 grid-cols-4 gap-2">
+					<div class="row-start-1 row-span-3 col-start-1 col-span-3 flex items-center">
 						<span class="handle cursor-move mr-2">
-							<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
-								stroke="currentColor">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
+								viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M4 8h16M4 16h16" />
 							</svg>
 						</span>
 						<input type="checkbox" v-model="todo.completed" @change="updateTodo(todo)"
 							class="form-checkbox h-5 w-5 text-blue-600" />
-						<span :class="{
-							'line-through text-gray-500': todo.completed,
-							'text-gray-900': !todo.completed
-						}" class="ml-2">
-							{{ todo.title }}
-						</span>
-						<div class=" col-span-2 flex justify-start gap-x-1">
-							<span v-for="tag in selectedTags" :key="tag.id" :value="tag.name">
-								<p :style="{ color: tag.color, backgroundColor: getBackgroundColor(tag.color) }"
-									class="block rounded-full text-xs px-2 py-0.5 text-center">
-									{{ tag.name }}
-								</p>
+						<div :class="selectedTags.length ? 'grid grid-rows-2' : 'flex flex-col'">
+							<!-- Titre du todo -->
+							<span :class="todo.completed ? 'line-through text-gray-500' : 'text-gray-900'" class="ml-2">
+								{{ todo.title }}
 							</span>
+
+							<!-- Liste des tags -->
+							<div class="row-end-3 flex flex-wrap gap-1 ml-2">
+								<span v-for="tag in selectedTags" :key="tag.id" :value="tag.name"
+									class="rounded-full text-xs px-2 py-0.5 text-center" :style="{
+										color: tag.color,
+										backgroundColor: getBackgroundColor(tag.color),
+									}">
+									{{ tag.name }}
+								</span>
+							</div>
 						</div>
 					</div>
-					<div class="row-span-2 row-start-1 row-end-4 col-end-6 col-span-1 flex space-x-2">
+
+					<div class="row-start-1 row-span-3  row-end-4 col-end-5 col-span-1 flex justify-around">
 						<TagList v-model="selectedTags" />
-						<button @click="deleteTodo(todo._id)" class="text-red-500 hover:text-red-700 focus:outline-none">
+						<button @click="deleteTodo(todo._id)"
+							class="text-red-500 hover:text-red-700 focus:outline-none">
 							<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
 								stroke="currentColor">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M6 18L18 6M6 6l12 12" />
 							</svg>
 						</button>
 					</div>

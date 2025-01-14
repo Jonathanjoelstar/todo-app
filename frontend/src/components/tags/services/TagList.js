@@ -2,7 +2,6 @@
 import axios from 'axios';
 import Sortable from 'sortablejs';
 import Tags from '../models/Tags';
-import { ref } from 'vue';
 import {Listbox,ListboxButton,ListboxOptions,ListboxOption,Popover, PopoverButton, PopoverPanel } from '@headlessui/vue';
 import { CheckIcon } from '@heroicons/vue/20/solid';
 
