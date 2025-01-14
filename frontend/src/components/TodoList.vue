@@ -10,10 +10,10 @@
 		</form>
 
 		<div ref="sortableList">
-			<transition-group>
+			<transition-group tag="ul" name="list">
 				<li v-for="todo in todos" :key="todo._id"
-					class="flex items-center p-2 bg-gray-50 rounded-md shadow-sm grid grid-rows-3 grid-cols-4 gap-2">
-					<div class="row-start-1 row-span-3 col-start-1 col-span-3 flex items-center">
+					class="flex items-center p-2 bg-gray-50 rounded-md shadow-sm grid grid-cols-5 gap-x-2 mb-2">
+					<div class="row-start-1 row-span-3 col-start-1 col-span-4 text-sm flex items-center">
 						<span class="handle cursor-move mr-2">
 							<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
 								viewBox="0 0 24 24" stroke="currentColor">
@@ -23,27 +23,26 @@
 						</span>
 						<input type="checkbox" v-model="todo.completed" @change="updateTodo(todo)"
 							class="form-checkbox h-5 w-5 text-blue-600" />
-						<div :class="selectedTags.length ? 'grid grid-rows-2' : 'flex flex-col'">
+						<div>
 							<!-- Titre du todo -->
-							<span :class="todo.completed ? 'line-through text-gray-500' : 'text-gray-900'" class="ml-2">
+							<span :class="todo.completed ? 'line-through text-gray-500' : 'text-gray-900'"
+								class="flex ml-2 font-semibold text-sm ">
 								{{ todo.title }}
 							</span>
 
 							<!-- Liste des tags -->
-							<div class="row-end-3 flex flex-wrap gap-1 ml-2">
-								<span v-for="tag in selectedTags" :key="tag.id" :value="tag.name"
-									class="rounded-full text-xs px-2 py-0.5 text-center" :style="{
-										color: tag.color,
-										backgroundColor: getBackgroundColor(tag.color),
-									}">
+							<div class="flex flex-wrap gap-1 ml-2">
+								<span v-for="tag in todo.selectedTags" :key="tag.id"
+									class="rounded-full text-xs font-normal px-2 pb-0.5 text-justify "
+									:style="{ color: tag.color, backgroundColor: getBackgroundColor(tag.color) }">
 									{{ tag.name }}
 								</span>
 							</div>
 						</div>
 					</div>
 
-					<div class="row-start-1 row-span-3  row-end-4 col-end-5 col-span-1 flex justify-around">
-						<TagList v-model="selectedTags" />
+					<div class="row-start-1 row-span-3 row-end-4 col-end-6 col-span-1 flex justify-around">
+						<TagList v-model="todo.selectedTags" />
 						<button @click="deleteTodo(todo._id)"
 							class="text-red-500 hover:text-red-700 focus:outline-none">
 							<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -53,10 +52,7 @@
 							</svg>
 						</button>
 					</div>
-
 				</li>
-
-
 			</transition-group>
 		</div>
 	</div>
@@ -64,17 +60,16 @@
 
 <script>
 import axios from 'axios';
-import Sortable from 'sortablejs';
-import TagList from './tags/components/TagList.vue';
+import Sortable from "sortablejs";
+import TagList from "./tags/components/TagList.vue";
 
 export default {
-	components: {
-		TagList
-	},
+	components: { TagList },
 	data() {
 		return {
-			todos: [],
-			newTodo: '',
+			todos: [
+			],
+			newTodo: "",
 			notification: '',
 			notificationClass: '',
 			hideTag: false,
@@ -85,7 +80,7 @@ export default {
 			getBackgroundColor(color) {
 				// Enlève "rgb(" et ")" puis sépare les composants
 				const rgbValues = color.match(/\d+/g);
-				return `rgba(${rgbValues[0]}, ${rgbValues[1]}, ${rgbValues[2]}, 0.2)`;
+				return `rgba(${rgbValues[0]}, ${rgbValues[1]}, ${rgbValues[2]}, 0.1)`;
 			},
 		async fetchTodos() {
 			try {

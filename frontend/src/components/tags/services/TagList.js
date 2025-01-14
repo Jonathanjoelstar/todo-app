@@ -1,18 +1,18 @@
-
-import axios from 'axios';
-import Sortable from 'sortablejs';
-import Tags from '../models/Tags';
-import {Listbox,ListboxButton,ListboxOptions,ListboxOption,Popover, PopoverButton, PopoverPanel } from '@headlessui/vue';
-import { CheckIcon } from '@heroicons/vue/20/solid';
-
-
-
-
-
-console.log('7' + 3);
+import axios from "axios";
+import Sortable from "sortablejs";
+import {
+  Listbox,
+  ListboxButton,
+  ListboxOptions,
+  ListboxOption,
+  Popover,
+  PopoverButton,
+  PopoverPanel,
+} from "@headlessui/vue";
+import { CheckIcon } from "@heroicons/vue/20/solid";
 
 export default {
-   components: {
+  components: {
     Listbox,
     ListboxButton,
     ListboxOptions,
@@ -20,14 +20,14 @@ export default {
     Popover,
     PopoverButton,
     PopoverPanel,
-    CheckIcon 
+    CheckIcon,
   },
-    name: 'TagList',
-    props: {
+  name: "TagList",
+  props: {
     modelValue: {
       type: Array,
-      default: () => []
-    }
+      default: () => [],
+    },
   },
   computed: {
     selectedTags: {
@@ -35,94 +35,75 @@ export default {
         return this.modelValue;
       },
       set(newValues) {
-        this.$emit('update:modelValue', newValues);
-      }
-    }
+        this.$emit("update:modelValue", newValues);
+      },
+    },
   },
-      data() {
-        //Dans un premier données en dur
-        const tag1 = new Tags("1","Bug","rgba(241, 97, 60, 1)","Documentation");
-        const tag2 = new Tags("2","Backend","rgba(67, 106, 247, 1)","Documentation");
-        const tag3 = new Tags("3","Urgent","rgba(241, 59, 59, 1)","Documentation");
-        const tag4 = new Tags("4","Feature","rgba(91, 205, 29, 1)","Documentation");
-        const tag5 = new Tags("5","Frontend","rgba(185, 29, 205, 1)","Documentation");
-        const tag6 = new Tags("6","UI/UX","rgba(51, 59, 205, 1)","Documentation");
-        const tags = [tag1,tag2,tag3,tag4,tag5,tag6];
-
-        return {       
-          tags,
-          hideTag: false
-        };
+  data() {
+    return {
+      tags:[],
+      categories:[],
+    };
+  },
+  created() {
+  this.fetchTags();
+  this.fetchCategorie()
   },
   methods: {
+     // Récupérer toute les categories depuis le serveur
+  async fetchCategorie() {
+    try {
+      const response = await axios.get(`/api/categories`);
+      this.categories = response.data; // Assurez-vous que la réponse contient un tableau de tags
+    } catch (error) {
+      console.error("Erreur lors de la récupération des tags :", error);
+    }
+  },
+
+  // Récupérer tous les tags depuis le serveur
+  async fetchTags() {
+    try {
+      const response = await axios.get(`/api/tags`);
+      this.tags = response.data; // Assurez-vous que la réponse contient un tableau de tags
+    } catch (error) {
+      console.error("Erreur lors de la récupération des tags :", error);
+    }
+  },
+
+  // Ajouter un nouveau tag
+  async addTag(newTag) {
+    try {
+      const response = await axios.post("/api/tags", newTag);
+      this.tags.push(response.data); // Ajout du tag créé au tableau local
+    } catch (error) {
+      console.error("Erreur lors de l'ajout du tag :", error);
+    }
+  },
+
+  // Modifier un tag existant
+  async updateTag(tagId, updatedTag) {
+    try {
+      const response = await axios.patch(`/api/tags/${tagId}`, updatedTag);
+      // Mettre à jour le tag localement
+      const index = this.tags.findIndex((tag) => tag.id === tagId);
+      if (index !== -1) {
+        this.$set(this.tags, index, response.data);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la modification du tag :", error);
+    }
+  },
+
+  // Supprimer un tag
+  async deleteTag(tagId) {
+    try {
+      await axios.delete(`/api/tags/${tagId}`);
+      // Supprimer le tag localement
+      this.tags = this.tags.filter((tag) => tag.id !== tagId);
+    } catch (error) {
+      console.error("Erreur lors de la suppression du tag :", error);
+    }
+  },
+},
   
-
-//     async fetchTodos() {
-//       try {
-//         const response = await axios.get('/api/todos');
-//         this.todos = response.data;
-//       } catch (error) {
-//         console.error(error);
-//         this.showNotification('Erreur lors de la récupération des tâches.', 'bg-red-100 text-red-700');
-//       }
-//     },
-//     async addTodo() {
-//       if (this.newTodo.trim() === '') return;
-//       try {
-//         const response = await axios.post('/api/todos', { title: this.newTodo });
-//         this.todos.push(response.data);
-//         this.newTodo = '';
-//         this.showNotification('Tâche ajoutée avec succès.', 'bg-green-100 text-green-700');
-//       } catch (error) {
-//         console.error(error);
-//         this.showNotification('Erreur lors de l\'ajout de la tâche.', 'bg-red-100 text-red-700');
-//       }
-//     },
-//     async updateTodo(todo) {
-//       try {
-//         await axios.patch(`/api/todos/${todo._id}`, { completed: todo.completed });
-//         this.showNotification('Tâche mise à jour.', 'bg-green-100 text-green-700');
-//       } catch (error) {
-//         console.error(error);
-//         this.showNotification('Erreur lors de la mise à jour de la tâche.', 'bg-red-100 text-red-700');
-//       }
-//     },
-//     async deleteTodo(id) {
-//       try {
-//         await axios.delete(`/api/todos/${id}`);
-//         this.todos = this.todos.filter(todo => todo._id !== id);
-//         this.showNotification('Tâche supprimée.', 'bg-green-100 text-green-700');
-//       } catch (error) {
-//         console.error(error);
-//         this.showNotification('Erreur lors de la suppression de la tâche.', 'bg-red-100 text-red-700');
-//       }
-//     },
-//     async onDragEnd() {
-//       try {
-//         await axios.put('/api/todos/reorder', { todos: this.todos });
-//         this.showNotification('Ordre des tâches mis à jour.', 'bg-green-100 text-green-700');
-//       } catch (error) {
-//         console.error('Error updating order:', error);
-//         this.showNotification('Erreur lors de la mise à jour de l\'ordre.', 'bg-red-100 text-red-700');
-//       }
-//     },
-//     showNotification(message, className) {
-//       this.notification = message;
-//       this.notificationClass = className;
-//       setTimeout(() => {
-//         this.notification = '';
-//       }, 3000);
-//     }
-//   },
-//   mounted() {
-//     this.fetchTodos();
-
-//     // Initialiser Sortable
-//     Sortable.create(this.$refs.sortableList, {
-//       handle: '.handle',
-//       animation: 150,
-//       onEnd: this.onDragEnd,
-//     });
-  }
-};
-
+}

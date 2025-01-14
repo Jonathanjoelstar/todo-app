@@ -3,10 +3,19 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const todoRoutes = require('./routes/todos');
+const tagRoutes = require('./routes/tagRoutes');
+const categoryRoutes = require('./routes/categoryRoutes')
 const net = require('net');
 
 const app = express();
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/todos';
+const env = 'development';
+
+// Fonction pour charger des données de tests
+if (env === 'development') {
+  const seedDatabase = require('./seed');
+  seedDatabase();
+}
 
 // Fonction pour tester si un port est disponible
 const isPortAvailable = (port) => {
@@ -33,7 +42,16 @@ const startServer = async () => {
 
   app.use(cors());
   app.use(bodyParser.json());
+
+  app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
   app.use('/api/todos', todoRoutes);
+  app.use('/api/tags', tagRoutes);
+   app.use('/api/categories', categoryRoutes);
+
+
 
   try {
     await mongoose.connect(MONGO_URI, {
