@@ -1,72 +1,42 @@
 const Tag = require('../models/Tag');
-const Category = require('../models/Category');
 
-exports.getAllCategory = async (req, res) => {
-  try {
-    const category = await Category.find(); 
-    res.status(200).json(category);   
-  } catch (error) {
-    console.error("Erreur lors de la récupération des tags :", error);
-    res.status(500).json({ message: "Erreur lors de la récupération des tags", error });
-  }
-};
-
+// Récupérer tous les tags
 exports.getAllTags = async (req, res) => {
   try {
-    const tags = await Tag.find(); 
-    res.status(200).json(tags);   
+    const tags = await Tag.find();
+    res.status(200).json(tags);
   } catch (error) {
-    console.error("Erreur lors de la récupération des tags :", error);
-    res.status(500).json({ message: "Erreur lors de la récupération des tags", error });
+    res.status(500).json({ message: 'Erreur serveur', error });
   }
 };
 
+// Créer un nouveau tag
 exports.createTag = async (req, res) => {
-  const { name, color, categoryId } = req.body;
-
   try {
-    const category = await Category.findById(categoryId);
-    if (!category) {
-      return res.status(404).json({ message: 'Catégorie introuvable' });
-    }
-
-    const newTag = new Tag({ name, color, categoryId });
-    await newTag.save();
-    res.status(200).json(newTag);
+    const tag = new Tag(req.body);
+    await tag.save();
+    res.status(201).json(tag);
   } catch (error) {
-    res.status(500).json({ message: 'Erreur lors de la création dutag', error });
+    res.status(400).json({ message: 'Erreur de création', error });
   }
 };
 
+// Modifier un tag
 exports.updateTag = async (req, res) => {
-  const  id  = req.params.id;
-  const { name, color } = req.body;
-
   try {
-    const updatedTag = await Tag.findByIdAndUpdate(
-      id,
-      { name, color },
-      { new: true }
-    );
-    if (!updatedTag) {
-      return res.status(404).json({ message: 'Tag introuvable' });
-    }
+    const updatedTag = await Tag.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.status(200).json(updatedTag);
   } catch (error) {
-    res.status(500).json({ message: 'Error updating tag', error });
+    res.status(400).json({ message: 'Erreur de mise à jour', error });
   }
 };
 
+// Supprimer un tag
 exports.deleteTag = async (req, res) => {
-  const id  = req.params.id;;
-
   try {
-    const deletedTag = await Tag.findByIdAndDelete(id);
-    if (!deletedTag) {
-      return res.status(404).json({ message: 'Tag not found' });
-    }
-    res.status(204).send();
+    await Tag.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: 'Tag supprimé avec succès' });
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting tag', error });
+    res.status(500).json({ message: 'Erreur de suppression', error });
   }
 };

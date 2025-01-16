@@ -1,15 +1,8 @@
 const mongoose = require('mongoose');
 const Todo = require('./models/Todo');
 const Tag = require('./models/Tag');
-const Category = require('./models/Category');
 
 // Données par défaut
-const categoriesData = [
-  { name: 'Documentation' },
-  { name: 'Developpement projet 1' },
-  { name: 'Developpement projet 2' },
-];
-
 const todosData = [
   { title: 'Corriger le bug d\'authentification en production', completed: false },
   { title: 'Implémenter le drag & drop dans la liste des tâches', completed: true },
@@ -31,27 +24,16 @@ const seedDatabase = async () => {
     console.log('Remplissage de la base de données en cours...');
 
     // Supprimer les anciennes données
-    await Category.deleteMany({});
     await Todo.deleteMany({});
     await Tag.deleteMany({});
     console.log('Anciennes données supprimées');
 
     // Insérer les nouvelles données
-    const categories = await Category.insertMany(categoriesData);
-    console.log('Categories insérées:', categories);
-
     const todos = await Todo.insertMany(todosData);
     console.log('Todos insérés:', todos);
 
-    // Associer des tags aux catégories et tâches
-    const tags = tagsData.map((tag, index) => ({
-      ...tag,
-      categoryId: categories[index % categories.length]._id,
-      todoId: todos[index % todos.length]._id,
-    }));
-
-    await Tag.insertMany(tags);
-    console.log('Tags insérés:', tags);
+    await Tag.insertMany(tagsData);
+    console.log('Tags insérés:', tagsData);
 
     console.log('Base de données remplie avec succès');
   } catch (error) {

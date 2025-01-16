@@ -4,13 +4,12 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const todoRoutes = require('./routes/todos');
 const tagRoutes = require('./routes/tagRoutes');
-const categoryRoutes = require('./routes/categoryRoutes')
 const net = require('net');
 
 const app = express();
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/todos';
 const env = 'development';
-
+mongoose.set("debug", true);
 // Fonction pour charger des données de tests
 if (env === 'development') {
   const seedDatabase = require('./seed');
@@ -47,12 +46,11 @@ const startServer = async () => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
 });
+
   app.use('/api/todos', todoRoutes);
   app.use('/api/tags', tagRoutes);
-   app.use('/api/categories', categoryRoutes);
 
-
-
+  
   try {
     await mongoose.connect(MONGO_URI, {
       useNewUrlParser: true,
