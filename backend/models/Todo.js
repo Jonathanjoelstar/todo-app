@@ -17,17 +17,15 @@ const TodoSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-    tags: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Tag',
-        },
-    ],
     priority: {
         type: String,
-        enum: ['low', 'normal', 'high'], // Gestion des priorités
+        enum: ['low', 'normal', 'high'],
         default: 'normal',
     },
+    tags: [{
+        type: mongoose.Schema.Types.ObjectId, // C'est une référence vers le modèle Tag
+        ref: 'Tag', // Nom du modèle Tag
+    }],
 });
 
 module.exports = mongoose.model('Todo', TodoSchema);

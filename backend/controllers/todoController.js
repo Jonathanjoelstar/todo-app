@@ -1,6 +1,9 @@
 const Todo = require('../models/Todo');
 const Tag = require('../models/Tag');
 const { validationResult } = require('express-validator');
+const mongoose = require('mongoose');
+
+
 
 // Utility function to handle errors
 const handleErrors = (res, error, message = 'Erreur serveur') => {
@@ -19,12 +22,36 @@ const validateRequest = (req, res, next) => {
 // Récupérer toutes les tâches
 exports.getAllTodos = async (req, res) => {
     try {
-        const todos = await Todo.find().populate('tags');
-        res.status(200).json(todos);
+        // Get page and limit from query parameters, defaulting to page 1 and limit 5 if not provided
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+
+        // Calculate the number of items to skip based on the page
+        const skip = (page - 1) * limit;
+
+        // Fetch todos with pagination
+        const todos = await Todo.find()
+            .populate('tags')
+            .skip(skip) // Skip the first 'skip' items
+            .limit(limit); // Limit the number of items
+
+        // Get the total count of todos to calculate total pages
+        const totalCount = await Todo.countDocuments();
+
+        // Calculate the total number of pages
+        const totalPages = Math.ceil(totalCount / limit);
+
+        // Return the todos and pagination info
+        res.status(200).json({
+            todos,
+            totalPages,
+            currentPage: page
+        });
     } catch (error) {
         handleErrors(res, error);
     }
 };
+
 
 // Recherche avec pagination
 exports.searchTodos = async (req, res) => {
@@ -54,17 +81,6 @@ exports.filterTodos = async (req, res) => {
     }
 };
 
-// Filtrer par tag
-exports.getTodosByTag = async (req, res) => {
-    const { tagId } = req.params;
-    try {
-        const todos = await Todo.find({ tags: tagId }).populate('tags');
-        res.status(200).json(todos);
-    } catch (error) {
-        handleErrors(res, error);
-    }
-};
-
 // Tri par priorité
 exports.getTodosByPriority = async (req, res) => {
     try {
@@ -72,6 +88,49 @@ exports.getTodosByPriority = async (req, res) => {
         res.status(200).json(todos);
     } catch (error) {
         handleErrors(res, error);
+    }
+};
+
+// Filtrer les tâches par tags
+exports.getTodosByTag = async (req, res) => {
+    const { tagId } = req.params;
+    const { page = 1, limit = 10 } = req.query; // Pagination (par défaut page 1 et 10 résultats)
+
+    // Vérifier si page et limit sont des entiers positifs
+    if (isNaN(page) || page < 1 || isNaN(limit) || limit < 1) {
+        return res.status(400).json({ message: 'Les paramètres de pagination sont invalides' });
+    }
+
+    try {
+        // Vérifie si l'ID du tag est valide
+        if (!mongoose.Types.ObjectId.isValid(tagId)) {
+            return res.status(400).json({ message: 'ID de tag invalide' });
+        }
+
+        // Recherche le nombre total de tâches associées au tag
+        const totalTasks = await Todo.countDocuments({ tags: tagId });
+
+        // Recherche les tâches associées au tag avec pagination
+        const todos = await Todo.find({ tags: tagId })
+            .populate('tags')
+            .skip((page - 1) * limit)  // Calcul de l'offset
+            .limit(Number(limit));    // Limiter le nombre de résultats
+
+        if (!todos || todos.length === 0) {
+            return res.status(404).json({ message: 'Aucune tâche trouvée pour ce tag' });
+        }
+
+        // Retourne les tâches associées au tag avec des informations sur la pagination
+        res.status(200).json({
+            todos,
+            totalTasks,  // Nombre total de tâches
+            totalPages: Math.ceil(totalTasks / limit),  // Nombre total de pages
+            currentPage: Number(page),
+            perPage: Number(limit)
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des tâches par tag:', error);
+        res.status(500).json({ message: 'Erreur serveur', error: error.message });
     }
 };
 
@@ -83,8 +142,8 @@ exports.createTodo = [
             const { title, tags, priority } = req.body;
             const todo = new Todo({
                 title,
-                tags,
-                priority: priority || 1,
+                tags, // Le tableau de tags
+                priority: priority || 'normal', // Valeur par défaut 'normal' si non spécifiée
             });
             await todo.save();
             res.status(201).json(todo);
@@ -150,55 +209,77 @@ exports.getTodoById = async (req, res) => {
     }
 };
 
-// Ajouter des tags à une tâche
 exports.addTagToTodo = async (req, res) => {
     try {
+        console.log('Tag ID:', tagId);
         const { tagId } = req.body;
+        const { todoId } = req.params._id;
+
+        if (!mongoose.Types.ObjectId.isValid(tagId)) {
+            return res.status(400).json({ message: 'Invalid tag ID' });
+        }
 
         if (!tagId) {
-            return res.status(400).json({ success: false, message: 'ID du tag non fourni.' });
+            return res.status(400).json({ message: 'Tag ID is required' });
         }
 
-        // Vérifier si le tag existe
-        const isTagExists = await Tag.exists({ _id: tagId });
-        if (!isTagExists) {
-            return res.status(404).json({ success: false, message: 'Le tag spécifié est introuvable.' });
-        }
+        // Vérifie si la tâche et le tag existent
+        const [todo, tag] = await Promise.all([
+            Todo.findById(todoId),
+            Tag.findById(tagId),
+        ]);
 
-        // Mettre à jour la tâche
-        const updatedTodo = await Todo.findByIdAndUpdate(
-            req.params.id,
-            { $addToSet: { tags: tagId } }, // Ajout sans doublons
-            { new: true }
-        ).populate('tags'); // Inclure les détails des tags
-
-        if (!updatedTodo) {
+        if (!todo) {
             return res.status(404).json({ success: false, message: 'Tâche introuvable.' });
         }
+        if (!tag) {
+            return res.status(404).json({ success: false, message: 'Tag introuvable.' });
+        }
 
-        res.status(200).json(updatedTodo);
+        // Vérifie si le tag est déjà associé
+        if (todo.tags.includes(tagId)) {
+            return res.status(400).json({ success: false, message: 'Ce tag est déjà associé à cette tâche.' });
+        }
+
+        // Ajoute le tag à la tâche
+        todo.tags.push(tagId);
+        await todo.save();
+
+        // Récupère les tags mis à jour
+        const updatedTodo = await Todo.findById(todoId).populate('tags');
+
+        res.status(200).json({ success: true, tags: updatedTodo.tags });
     } catch (error) {
         console.error('Erreur lors de l\'ajout du tag :', error);
         res.status(500).json({ success: false, message: 'Erreur interne du serveur.' });
     }
 };
 
-// Supprimer des tags d'une tâche
-exports.removeTagsFromTodo = async (req, res) => {
+// Supprimer un tag d'une tâche
+exports.removeTagFromTodo = async (req, res) => {
     try {
         const { tagId } = req.body;
+        const todoId = req.params.id;
 
-        const updatedTodo = await Todo.findByIdAndUpdate(
-            req.params.id,
-            { $pull: { tags: tagId } }, // Supprimer le tag
-            { new: true }
-        ).populate('tags'); // Inclure les détails des tags
-
-        if (!updatedTodo) {
+        // Vérifie si la tâche existe
+        const todo = await Todo.findById(todoId);
+        if (!todo) {
             return res.status(404).json({ success: false, message: 'Tâche introuvable.' });
         }
 
-        res.status(200).json(updatedTodo);
+        // Vérifie si le tag est associé à la tâche
+        if (!todo.tags.includes(tagId)) {
+            return res.status(404).json({ success: false, message: 'Tag non associé à cette tâche.' });
+        }
+
+        // Supprime le tag de la tâche
+        todo.tags = todo.tags.filter(id => id.toString() !== tagId);
+        await todo.save();
+
+        // Récupère les tags mis à jour
+        const updatedTodo = await Todo.findById(todoId).populate('tags');
+
+        res.status(200).json({ success: true, tags: updatedTodo.tags });
     } catch (error) {
         console.error('Erreur lors de la suppression du tag :', error);
         res.status(500).json({ success: false, message: 'Erreur interne du serveur.' });

@@ -8,7 +8,7 @@ const TagSchema = new mongoose.Schema({
     },
     color: {
         type: String,
-        default: '#000000', // Couleur par défaut
+        default: '#000000',
     },
     createdAt: {
         type: Date,

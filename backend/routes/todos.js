@@ -18,7 +18,7 @@ router.delete('/:id', todoController.deleteTodo); // Supprimer une tâche
 // Routes supplémentaires
 router.patch('/:id/priority', todoController.updateTodoPriority); // Mettre à jour la priorité
 router.post('/:id/tags', todoController.addTagToTodo); // Ajouter des tags a une tache
-router.delete('/:id/tags', todoController.removeTagsFromTodo); // Supprimer des tags d'une tache
+router.delete('/:id/tags', todoController.removeTagFromTodo); // Supprimer des tags d'une tache
 router.put('/reorder', todoController.reorderTodos); // Réordonner les tâches
 
 module.exports = router;

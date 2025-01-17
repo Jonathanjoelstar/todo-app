@@ -1,5 +1,6 @@
 const Tag = require('../models/Tag');
 
+
 // Récupérer tous les tags
 exports.getAllTags = async (req, res) => {
   try {

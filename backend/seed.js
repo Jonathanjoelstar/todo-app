@@ -4,10 +4,10 @@ const Tag = require('./models/Tag');
 
 // Données par défaut
 const todosData = [
-  { title: 'Corriger le bug d\'authentification en production', completed: false },
-  { title: 'Implémenter le drag & drop dans la liste des tâches', completed: true },
-  { title: 'Optimiser les requêtes MongoDB', completed: false },
-  { title: 'Mettre a jour les dépendances npm', completed: false },
+  { title: "Corriger le bug d'authentification en production", completed: false, priority: 'high', position: 1, tags: [] },
+  { title: 'Implémenter le drag & drop dans la liste des tâches', completed: true, priority: 'normal', position: 2, tags: [] },
+  { title: 'Optimiser les requêtes MongoDB', completed: false, priority: 'high', position: 3, tags: [] },
+  { title: 'Mettre à jour les dépendances npm', completed: false, priority: 'low', position: 4, tags: [] },
 ];
 
 const tagsData = [
@@ -19,6 +19,7 @@ const tagsData = [
   { name: 'UI/UX', color: 'rgba(51, 59, 205, 1)' },
 ];
 
+// Fonction pour remplir la base de données
 const seedDatabase = async () => {
   try {
     console.log('Remplissage de la base de données en cours...');
@@ -26,26 +27,49 @@ const seedDatabase = async () => {
     // Supprimer les anciennes données
     await Todo.deleteMany({});
     await Tag.deleteMany({});
-    console.log('Anciennes données supprimées');
+    console.log('Anciennes données supprimées.');
 
-    // Insérer les nouvelles données
-    const todos = await Todo.insertMany(todosData);
-    console.log('Todos insérés:', todos);
+    // Insérer les nouvelles données dans Tag
+    const tags = await Tag.insertMany(tagsData);
+    console.log('Tags insérés avec succès.');
 
-    await Tag.insertMany(tagsData);
-    console.log('Tags insérés:', tagsData);
+    // Associer les tags aux todos
+    const todosWithTags = [
+      {
+        ...todosData[0],
+        tags: [tags.find(tag => tag.name === 'Bug')._id, tags.find(tag => tag.name === 'Urgent')._id], // Bug, Urgent
+      },
+      {
+        ...todosData[1],
+        tags: [tags.find(tag => tag.name === 'Feature')._id, tags.find(tag => tag.name === 'Frontend')._id], // Feature, Frontend
+      },
+      {
+        ...todosData[2],
+        tags: [tags.find(tag => tag.name === 'Backend')._id, tags.find(tag => tag.name === 'Urgent')._id], // Backend, Urgent
+      },
+      {
+        ...todosData[3],
+        tags: [tags.find(tag => tag.name === 'UI/UX')._id], // UI/UX
+      },
+    ];
 
-    console.log('Base de données remplie avec succès');
+    // Insérer les todos dans la base
+    const todos = await Todo.insertMany(todosWithTags);
+    console.log('Todos insérés avec succès.');
+
+    console.log('Base de données remplie avec succès.');
   } catch (error) {
-    console.error('Erreur lors du remplissage de la base de données:', error);
+    console.error('Erreur lors du remplissage de la base de données :', error);
     process.exit(1);
   }
 };
 
-module.exports = seedDatabase;
-
 // Si ce fichier est exécuté directement
 if (require.main === module) {
   const connectToDatabase = require('./db'); // Utiliser la connexion centralisée
-  connectToDatabase().then(seedDatabase).finally(() => mongoose.connection.close());
+  connectToDatabase()
+    .then(seedDatabase)
+    .finally(() => mongoose.connection.close());
 }
+
+module.exports = seedDatabase;
